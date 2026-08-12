@@ -7,7 +7,7 @@ from app.config import settings
 
 class OpenAIProvider(BaseProvider):
     def __init__(self):
-        super().__init__(name="openai", default_model="gpt-4o-mini")
+        super().__init__(name="openai", default_model="gpt-5.4-mini")
         self.api_key = settings.OPENAI_API_KEY
 
     async def chat(
@@ -24,12 +24,16 @@ class OpenAIProvider(BaseProvider):
             try:
                 from openai import AsyncOpenAI
                 client = AsyncOpenAI(api_key=self.api_key)
-                response = await client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens
-                )
+                
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                    "temperature": temperature
+                }
+                if max_tokens is not None:
+                    kwargs["max_tokens"] = max_tokens
+
+                response = await client.chat.completions.create(**kwargs)
                 latency_ms = int((time.time() - start_time) * 1000)
                 choice = response.choices[0]
                 usage = response.usage
@@ -72,13 +76,17 @@ class OpenAIProvider(BaseProvider):
             try:
                 from openai import AsyncOpenAI
                 client = AsyncOpenAI(api_key=self.api_key)
-                stream = await client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    stream=True
-                )
+                
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "stream": True
+                }
+                if max_tokens is not None:
+                    kwargs["max_tokens"] = max_tokens
+
+                stream = await client.chat.completions.create(**kwargs)
                 async for chunk in stream:
                     if chunk.choices and chunk.choices[0].delta.content:
                         yield chunk.choices[0].delta.content

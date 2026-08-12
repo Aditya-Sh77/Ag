@@ -3,20 +3,22 @@ from app.providers import get_provider, BaseProvider
 
 PRICING_PER_1K = {
     "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
-    "gemini-1.5-flash": {"input": 0.000075, "output": 0.0003},
+    "gemini-2.5-flash": {"input": 0.000075, "output": 0.0003},
+    "claude-3-5-sonnet-20240620": {"input": 0.003, "output": 0.015},
     "llama3": {"input": 0.0, "output": 0.0},
 }
 
 MODEL_METRICS = {
     "gpt-4o-mini": {"avg_latency_ms": 280, "quality": 0.88, "provider": "openai"},
-    "gemini-1.5-flash": {"avg_latency_ms": 210, "quality": 0.85, "provider": "gemini"},
+    "gemini-2.5-flash": {"avg_latency_ms": 210, "quality": 0.85, "provider": "gemini"},
+    "claude-3-5-sonnet-20240620": {"avg_latency_ms": 320, "quality": 0.95, "provider": "claude"},
     "llama3": {"avg_latency_ms": 180, "quality": 0.80, "provider": "ollama"},
 }
 
 CATEGORY_KEYWORDS = {
     "coding": ["code", "python", "javascript", "function", "bug", "algorithm", "api", "react", "html", "css"],
     "math": ["math", "calculate", "equation", "solve", "probability", "statistics", "integral"],
-    "vision": ["image", "photo", "picture", "diagram", "screenshot", "visual"],
+    "reasoning": ["analysis", "complex", "strategy", "reason", "architecture", "design"],
 }
 
 
@@ -36,7 +38,9 @@ def select_model_and_provider(
     mode = routing_mode.lower()
 
     if mode == "manual":
-        if "gemini" in requested_model:
+        if "claude" in requested_model or "anthropic" in requested_model:
+            return get_provider("claude"), requested_model
+        elif "gemini" in requested_model:
             return get_provider("gemini"), requested_model
         elif "llama" in requested_model or "ollama" in requested_model:
             return get_provider("ollama"), requested_model
@@ -48,24 +52,22 @@ def select_model_and_provider(
         if intent == "coding":
             return get_provider("openai"), "gpt-4o-mini"
         elif intent == "math":
-            return get_provider("gemini"), "gemini-1.5-flash"
+            return get_provider("gemini"), "gemini-2.5-flash"
+        elif intent == "reasoning":
+            return get_provider("claude"), "claude-3-5-sonnet-20240620"
         else:
-            return get_provider("ollama"), "llama3"
+            return get_provider("gemini"), "gemini-2.5-flash"
 
     elif mode == "cost":
-        # Return free local model or cheapest cloud model
-        return get_provider("ollama"), "llama3"
+        # Free local model or cheapest cloud model
+        return get_provider("gemini"), "gemini-2.5-flash"
 
     elif mode == "fastest":
-        # Return model with lowest rolling average latency
         fastest_model = min(MODEL_METRICS.items(), key=lambda x: x[1]["avg_latency_ms"])
         provider_name = fastest_model[1]["provider"]
         return get_provider(provider_name), fastest_model[0]
 
     elif mode == "balanced":
-        # Score = 0.4 * quality + 0.3 * (1/cost) + 0.3 * (1/latency)
-        # OpenAI gpt-4o-mini offers best overall balance
-        return get_provider("openai"), "gpt-4o-mini"
+        return get_provider("gemini"), "gemini-2.5-flash"
 
-    # Default fallback
     return get_provider("openai"), "gpt-4o-mini"

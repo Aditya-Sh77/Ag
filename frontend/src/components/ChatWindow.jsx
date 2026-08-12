@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User as UserIcon, Zap, DollarSign, Clock, ShieldCheck, Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { Send, Bot, User as UserIcon, Zap, DollarSign, Clock, Sparkles } from 'lucide-react';
 
 export default function ChatWindow({
   messages,
@@ -41,7 +42,7 @@ export default function ChatWindow({
             style={styles.selectInput}
           >
             <option value="manual">Manual (Specified Model)</option>
-            <option value="auto">Automatic (Intent Intent Classifier)</option>
+            <option value="auto">Automatic (Intent Classifier)</option>
             <option value="cost">Cost Optimized (Lowest $)</option>
             <option value="fastest">Fastest (Lowest Latency)</option>
             <option value="balanced">Balanced (Quality + Speed + Cost)</option>
@@ -57,7 +58,8 @@ export default function ChatWindow({
               style={styles.selectInput}
             >
               <option value="gpt-4o-mini">OpenAI gpt-4o-mini</option>
-              <option value="gemini-1.5-flash">Google Gemini 1.5 Flash</option>
+              <option value="gemini-2.5-flash">Google Gemini 2.5 Flash</option>
+              <option value="claude-3-5-sonnet-20240620">Anthropic Claude 3.5 Sonnet</option>
               <option value="llama3">Ollama Llama 3 (Local)</option>
             </select>
           </div>
@@ -115,7 +117,18 @@ export default function ChatWindow({
                     </>
                   )}
                 </div>
-                <div style={styles.msgContent}>{msg.content}</div>
+
+                {/* Render content as Markdown for Assistant and plain text for User */}
+                {msg.role === 'user' ? (
+                  <div style={styles.msgContent}>{msg.content}</div>
+                ) : (
+                  <div className="markdown-body">
+                    <ReactMarkdown>
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
+
                 {msg.role === 'assistant' && msg.latency_ms && (
                   <div style={styles.metaFooter}>
                     <span>{msg.latency_ms}ms</span>

@@ -7,7 +7,7 @@ from app.config import settings
 
 class GeminiProvider(BaseProvider):
     def __init__(self):
-        super().__init__(name="gemini", default_model="gemini-1.5-flash")
+        super().__init__(name="gemini", default_model="gemini-2.5-flash")
         self.api_key = settings.GEMINI_API_KEY
 
     async def chat(
@@ -18,6 +18,10 @@ class GeminiProvider(BaseProvider):
         max_tokens: Optional[int] = None
     ) -> LLMResponse:
         model = model or self.default_model
+        # Normalize legacy model names if passed
+        if model in ["gemini-1.5-flash", "gemini-1.5-flash-latest"]:
+            model = "gemini-2.5-flash"
+
         start_time = time.time()
 
         if self.api_key and not self.api_key.startswith("your_"):
