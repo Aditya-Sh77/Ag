@@ -1,5 +1,6 @@
 # Logs
 #backend/app/config.py
+.env
 logs
 *.log
 npm-debug.log*
