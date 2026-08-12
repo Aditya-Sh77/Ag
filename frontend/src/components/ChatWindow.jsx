@@ -57,7 +57,7 @@ export default function ChatWindow({
               onChange={(e) => setSelectedModel(e.target.value)}
               style={styles.selectInput}
             >
-              <option value="gpt-4o-mini">OpenAI gpt-4o-mini</option>
+              <option value="gpt-5.4-mini">OpenAI gpt-5.4-mini</option>
               <option value="gemini-2.5-flash">Google Gemini 2.5 Flash</option>
               <option value="claude-3-5-sonnet-20240620">Anthropic Claude 3.5 Sonnet</option>
               <option value="llama3">Ollama Llama 3 (Local)</option>
