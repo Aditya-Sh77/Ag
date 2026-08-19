@@ -20,62 +20,67 @@ export default function Login() {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to login');
+      console.error('[Login Error]', err);
+      setError(err.response?.data?.detail || 'Failed to authenticate');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card} className="glass-card">
-        <div style={styles.logo}>
-          <Cpu size={32} color="#fff" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.25),rgba(255,255,255,0))] p-4 select-none">
+      <div className="w-full max-w-md p-8 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl shadow-2xl shadow-indigo-500/10 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-500 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/30">
+          <Cpu className="w-7 h-7 text-white" />
         </div>
-        <h2 style={styles.title}>Enterprise AI Platform</h2>
-        <p style={styles.subtitle}>Sign in to access unified gateway control plane</p>
+        
+        <h2 className="text-2xl font-bold text-white tracking-tight mb-1">AgentFlow AI</h2>
+        <p className="text-xs text-slate-400 mb-6">Sign in to access multi-LLM control plane</p>
 
-        {error && <div style={styles.errorAlert}>{error}</div>}
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs text-left">
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Email Address</label>
+        <form onSubmit={handleSubmit} className="space-y-4 text-left">
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Email Address</label>
             <input
               type="email"
               required
-              className="glass-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@enterprise.com"
+              placeholder="user@agentflow.ai"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
             />
           </div>
 
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Password</label>
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Password</label>
             <input
               type="password"
               required
-              className="glass-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="btn-gradient"
-            style={styles.submitBtn}
+            className="w-full py-3 mt-2 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? 'Authenticating...' : 'Sign In'}
-            {!loading && <ArrowRight size={16} style={{ marginLeft: 8 }} />}
+            {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
 
-        <p style={styles.footerText}>
+        <p className="mt-6 text-xs text-slate-400">
           Don't have an account?{' '}
-          <Link to="/register" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600 }}>
+          <Link to="/register" className="text-indigo-40 font-semibold hover:underline">
             Register Now
           </Link>
         </p>
@@ -83,82 +88,3 @@ export default function Login() {
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'var(--bg-dark)',
-    background: 'radial-gradient(circle at 50% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 60%)',
-    padding: '20px',
-  },
-  card: {
-    width: '100%',
-    maxWidth: '420px',
-    padding: '40px 32px',
-    textAlign: 'center',
-  },
-  logo: {
-    width: '56px',
-    height: '56px',
-    borderRadius: '16px',
-    background: 'var(--accent-gradient)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: '0 auto 20px',
-    boxShadow: '0 0 24px rgba(99, 102, 241, 0.4)',
-  },
-  title: {
-    fontSize: '22px',
-    fontWeight: 700,
-    color: '#fff',
-    marginBottom: '8px',
-  },
-  subtitle: {
-    fontSize: '13px',
-    color: 'var(--text-muted)',
-    marginBottom: '28px',
-  },
-  errorAlert: {
-    background: 'rgba(239, 68, 68, 0.15)',
-    border: '1px solid rgba(239, 68, 68, 0.3)',
-    color: '#f87171',
-    fontSize: '13px',
-    padding: '10px 14px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    textAlign: 'left',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '18px',
-  },
-  inputGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    textAlign: 'left',
-    gap: '6px',
-  },
-  label: {
-    fontSize: '12px',
-    fontWeight: 600,
-    color: 'var(--text-muted)',
-  },
-  submitBtn: {
-    padding: '12px',
-    marginTop: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '14px',
-  },
-  footerText: {
-    marginTop: '24px',
-    fontSize: '13px',
-    color: 'var(--text-muted)',
-  },
-};

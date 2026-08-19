@@ -20,7 +20,6 @@ async def test_all_providers():
         print(f"Default Model: {provider.default_model}")
         
         # Check API Key status
-        print(settings.OPENAI_API_KEY)
         key_val = getattr(settings, f"{provider_name.upper()}_API_KEY", None)
         if provider_name == "ollama":
             print(f"Base URL: {settings.OLLAMA_BASE_URL}")

@@ -13,7 +13,12 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./enterprise_ai.db"
 
     # API Keys
-
+    OPENAI_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
+    OPENROUTER_API_KEY: str = ""
+    CLAUDE_API_KEY: str = ""
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
 
     model_config = SettingsConfigDict(
         env_file=".env",

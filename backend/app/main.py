@@ -1,18 +1,22 @@
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import time
+import traceback
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import init_db
 from app.routers import auth, chat
-from app.providers import PROVIDERS
+from app.providers import PROVIDERS, print_provider_health_summary, get_providers_status
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup DB init
     await init_db()
+    # Print Model Provider Health Report to terminal console on start
+    print_provider_health_summary()
     yield
 
 
@@ -22,6 +26,20 @@ app = FastAPI(
     description="Enterprise AI Platform Control Plane & Gateway Core",
     lifespan=lifespan
 )
+
+# Global Exception Handler for debugging
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print("\n" + "❌" * 30)
+    print(f"[BACKEND UNHANDLED ERROR] Exception on {request.method} {request.url}")
+    print(f"Error Type: {type(exc).__name__}")
+    print(f"Details: {str(exc)}")
+    print(traceback.format_exc())
+    print("❌" * 30 + "\n")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}", "error_type": type(exc).__name__}
+    )
 
 # CORS configuration
 app.add_middleware(
@@ -42,7 +60,8 @@ async def health_check():
     return {
         "status": "online",
         "project": settings.PROJECT_NAME,
-        "environment": settings.ENVIRONMENT
+        "environment": settings.ENVIRONMENT,
+        "providers_status": get_providers_status()
     }
 
 
@@ -64,6 +83,7 @@ async def check_provider_health():
                 "sample_response": res.content[:100]
             }
         except Exception as e:
+            print(f"[HEALTH CHECK ERROR] Provider {name} failed: {e}")
             results[name] = {
                 "status": "error",
                 "error": str(e)

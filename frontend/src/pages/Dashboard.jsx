@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import ChatWindow from '../components/ChatWindow';
-import api from '../services/api';
+import { api } from '../services/api';
 
 export default function Dashboard() {
   const [conversations, setConversations] = useState([]);
@@ -9,14 +9,14 @@ export default function Dashboard() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [routingMode, setRoutingMode] = useState('auto');
-  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  const [selectedModel, setSelectedModel] = useState('llama-3.3-70b-versatile');
 
   const fetchConversations = async () => {
     try {
-      const res = await api.get('/conversations');
-      setConversations(res.data);
+      const data = await api.getConversations();
+      setConversations(data);
     } catch (err) {
-      console.error('Failed to load conversations', err);
+      console.error('[Dashboard] Failed to fetch conversations list:', err);
     }
   };
 
@@ -27,10 +27,10 @@ export default function Dashboard() {
   const handleSelectConv = async (convId) => {
     setActiveConvId(convId);
     try {
-      const res = await api.get(`/conversations/${convId}/messages`);
-      setMessages(res.data);
+      const data = await api.getMessages(convId);
+      setMessages(data);
     } catch (err) {
-      console.error('Failed to load messages', err);
+      console.error(`[Dashboard] Failed to fetch messages for conversation ${convId}:`, err);
     }
   };
 
@@ -53,24 +53,28 @@ export default function Dashboard() {
         conversation_id: activeConvId,
       };
 
-      const res = await api.post('/chat', payload);
+      const data = await api.sendMessage(payload);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: res.data.content,
-        model_used: res.data.model_used,
-        latency_ms: res.data.latency_ms,
-        cost: res.data.cost
+        content: data.content,
+        model_used: data.model_used,
+        provider_used: data.provider_used,
+        latency_ms: data.latency_ms,
+        cost: data.cost,
+        input_tokens: data.input_tokens,
+        output_tokens: data.output_tokens
       }]);
 
-      if (!activeConvId) {
-        setActiveConvId(res.data.conversation_id);
+      if (!activeConvId && data.conversation_id) {
+        setActiveConvId(data.conversation_id);
         fetchConversations();
       }
     } catch (err) {
-      console.error('Chat error', err);
+      console.error('[Dashboard] Chat completion request failed:', err);
+      const errDetail = err.response?.data?.detail || err.message || 'Unknown network error';
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Error: Failed to route chat completion request through Gateway.',
+        content: `⚠️ **Error Processing Request**\n\nFailed to route chat request through AI Gateway.\n\n\`\`\`text\n${errDetail}\n\`\`\``,
       }]);
     } finally {
       setLoading(false);
@@ -78,7 +82,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div className="flex w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans">
       <Sidebar
         conversations={conversations}
         activeConvId={activeConvId}

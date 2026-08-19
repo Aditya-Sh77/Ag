@@ -12,10 +12,17 @@ from app.models.user import User
 from app.models.conversation import Conversation, Message
 from app.models.request_log import RequestLog
 from app.schemas.chat import ChatRequest, ChatResponse, ConversationResponse, MessageResponse
+from app.providers import get_providers_status
 from app.routers.auth import get_current_user
 from app.services.router_service import select_model_and_provider
 
 router = APIRouter(prefix="/api", tags=["Gateway & Chat"])
+
+
+@router.get("/providers/status")
+async def get_all_providers_status():
+    """Returns availability & health status for all LLM providers (GPT, Gemini, Groq, OpenRouter)."""
+    return get_providers_status()
 
 
 @router.post("/chat", response_model=ChatResponse)

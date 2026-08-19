@@ -6,10 +6,17 @@ from app.providers.base import BaseProvider, LLMResponse
 from app.config import settings
 
 
-class OpenAIProvider(BaseProvider):
+class OpenRouterProvider(BaseProvider):
+    """
+    OpenRouter Provider - Unified access to open & free models
+    Supports: deepseek/deepseek-r1:free, meta-llama/llama-3.3-70b-instruct:free, google/gemini-2.0-flash-lite-preview-02-05:free
+    """
     def __init__(self):
-        super().__init__(name="openai", default_model="gpt-4o-mini")
-        self.api_key = settings.OPENAI_API_KEY
+        super().__init__(name="openrouter", default_model="deepseek/deepseek-r1:free")
+        self.api_key = settings.OPENROUTER_API_KEY
+
+    def is_configured(self) -> bool:
+        return bool(self.api_key and not self.api_key.startswith("your_"))
 
     async def chat(
         self,
@@ -19,16 +26,16 @@ class OpenAIProvider(BaseProvider):
         max_tokens: Optional[int] = None
     ) -> LLMResponse:
         model = model or self.default_model
-        if model == "gpt-5.4-mini":
-            model = "gpt-4o-mini"
-            
         start_time = time.time()
 
-        if self.api_key and not self.api_key.startswith("your_"):
+        if self.is_configured():
             try:
                 from openai import AsyncOpenAI
-                client = AsyncOpenAI(api_key=self.api_key)
-                
+                client = AsyncOpenAI(
+                    api_key=self.api_key,
+                    base_url="https://openrouter.ai/api/v1"
+                )
+
                 kwargs = {
                     "model": model,
                     "messages": messages,
@@ -41,6 +48,7 @@ class OpenAIProvider(BaseProvider):
                 latency_ms = int((time.time() - start_time) * 1000)
                 choice = response.choices[0]
                 usage = response.usage
+
                 return LLMResponse(
                     content=choice.message.content or "",
                     model=model,
@@ -52,15 +60,15 @@ class OpenAIProvider(BaseProvider):
                 )
             except Exception as e:
                 print("\n" + "=" * 60)
-                print(f"[OPENAI PROVIDER ERROR] Upstream API call failed for model '{model}'")
+                print(f"[OPENROUTER PROVIDER ERROR] Request failed for model: '{model}'")
                 print(f"Error Details: {e}")
                 print(traceback.format_exc())
                 print("=" * 60 + "\n")
 
-        # Graceful fallback response
-        await asyncio.sleep(0.25)
+        # Fallback simulation response
+        await asyncio.sleep(0.2)
         user_msg = messages[-1]["content"] if messages else ""
-        content = f"[OpenAI ({model}) Gateway Response] Solution for prompt: '{user_msg}'\n\n```python\ndef example():\n    return 'OpenAI Integration active'\n```"
+        content = f"[OpenRouter ({model}) Free Tier Response] Processed request: '{user_msg}'"
         latency_ms = int((time.time() - start_time) * 1000)
         return LLMResponse(
             content=content,
@@ -79,14 +87,15 @@ class OpenAIProvider(BaseProvider):
         max_tokens: Optional[int] = None
     ) -> AsyncGenerator[str, None]:
         model = model or self.default_model
-        if model == "gpt-5.4-mini":
-            model = "gpt-4o-mini"
 
-        if self.api_key and not self.api_key.startswith("your_"):
+        if self.is_configured():
             try:
                 from openai import AsyncOpenAI
-                client = AsyncOpenAI(api_key=self.api_key)
-                
+                client = AsyncOpenAI(
+                    api_key=self.api_key,
+                    base_url="https://openrouter.ai/api/v1"
+                )
+
                 kwargs = {
                     "model": model,
                     "messages": messages,
@@ -102,11 +111,11 @@ class OpenAIProvider(BaseProvider):
                         yield chunk.choices[0].delta.content
                 return
             except Exception as e:
-                print(f"[OPENAI STREAM ERROR] Streaming error on model {model}: {e}")
+                print(f"[OPENROUTER STREAM ERROR] {e}")
 
         # Stream fallback
-        response = await self.chat(messages, model, temperature, max_tokens)
-        words = response.content.split(" ")
+        res = await self.chat(messages, model, temperature, max_tokens)
+        words = res.content.split(" ")
         for word in words:
             yield word + " "
             await asyncio.sleep(0.03)

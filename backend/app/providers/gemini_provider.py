@@ -1,5 +1,6 @@
 import time
 import asyncio
+import traceback
 from typing import List, Dict, Any, Optional, AsyncGenerator
 from app.providers.base import BaseProvider, LLMResponse
 from app.config import settings
@@ -7,7 +8,7 @@ from app.config import settings
 
 class GeminiProvider(BaseProvider):
     def __init__(self):
-        super().__init__(name="gemini", default_model="gemini-2.5-flash")
+        super().__init__(name="gemini", default_model="gemini-2.0-flash")
         self.api_key = settings.GEMINI_API_KEY
 
     async def chat(
@@ -18,9 +19,6 @@ class GeminiProvider(BaseProvider):
         max_tokens: Optional[int] = None
     ) -> LLMResponse:
         model = model or self.default_model
-        # Normalize legacy model names if passed
-        if model in ["gemini-1.5-flash", "gemini-1.5-flash-latest"]:
-            model = "gemini-2.5-flash"
 
         start_time = time.time()
 
@@ -42,12 +40,16 @@ class GeminiProvider(BaseProvider):
                     latency_ms=latency_ms
                 )
             except Exception as e:
-                print(f"[Gemini Provider Warning] Upstream call failed ({e}). Falling back to normalized gateway response.")
+                print("\n" + "=" * 60)
+                print(f"[GEMINI PROVIDER ERROR] Upstream call failed for model '{model}'")
+                print(f"Error Details: {e}")
+                print(traceback.format_exc())
+                print("=" * 60 + "\n")
 
         # Fallback
-        await asyncio.sleep(0.25)
+        await asyncio.sleep(0.2)
         user_msg = messages[-1]["content"] if messages else ""
-        content = f"[Gemini ({model}) Gateway Normalized Response] Analyzed request: '{user_msg}'"
+        content = f"[Gemini ({model}) Gateway Response] Processed request: '{user_msg}'"
         latency_ms = int((time.time() - start_time) * 1000)
         return LLMResponse(
             content=content,
